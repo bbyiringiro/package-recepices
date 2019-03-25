@@ -78,7 +78,7 @@ def pushLocalRepo(repo_path, name, update=False):
         print('success')
     except Exception as err:
         print(err)
-        # raise Exception('couldn\'t push')
+        raise Exception('couldn\'t push')
 
 
 def parseURL(packageName):
@@ -88,7 +88,7 @@ def parseURL(packageName):
     elif len(packageName.split("/")) < 2:
         url = 'https://src.fedoraproject.org/rpms/'+packageName+'.git';
     else:
-        url = 'https://src.fedoraproject.org/'+packageName +'git';
+        url = 'https://src.fedoraproject.org/'+packageName +'.git';
     return url
     
    
