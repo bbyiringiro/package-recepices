@@ -1,87 +1,107 @@
 import argparse
 import git
 import json
-import os, shutil, time
+import os, time
+from pathlib import Path
 try:
     import queue
 except ImportError:
     import Queue as queue
 import threading
-import config
+import configparser
+
+def loadConfiguration(config_file_path=None):
+    config = configparser.ConfigParser()
+    defaultfile = "/.autocloner.cfg"
+    if config_file_path is None:
+        config_file_path = str(Path.home()) + defaultfile 
+        config.read(config_file_path)
+    else: 
+        config.read(config_file_path)
+    if len(config.sections()) ==0  or 'uoe-package-recipes' not in config:
+        print("Please create your config file editing and running createMyConfig.py or pass your configuration file path as second argument")
+        raise ValueError('couldn\'t find config file')
+    
+    key='url'
+    if key in config['uoe-package-recipes']:
+        return str(config['uoe-package-recipes'][key])
+    else:
+        raise ValueError('Couldn\'t find', key, 'in the config file')
 
 
 
 
-def cloneRepo(URL, cloningpath='temp'):
+def cloneRepo(url, cloningpath='temp'):
     """
     Clones a single GIT repository.
     Input:-
-    URL: GIT repository URL.
+    url: GIT repository url.
     cloningPath: the directory that the repository will be cloned at. But the Default is temp
     """
 
     try:
-        try:
-            if not os.path.exists(cloningpath):
-                os.mkdir(cloningpath)
-        except Exception as err:
-            print("Something went wrong while creating a dir, "+err)
-
-        reponame = URL.split("/")[-2] + "_" + URL.split("/")[-1]
-        # URL = URL.replace("git@", "https://")
-
-        if reponame.endswith(".git"):
-            reponame = reponame[:-4]
-        if '@' in reponame:
-            reponame = reponame.split('_')[-1]
-
-        fullpath = cloningpath + "/" + reponame
-        update=False
-        if os.path.exists(fullpath):
-            # git.Repo(fullpath).remote().pull() # update repo if it already exist
-            repo = git.Repo(fullpath)
-            origin = repo.remotes.origin
-            origin.pull('master')
-            print("Repo already exists, so only updated at", fullpath)
-            update=True
-        else:
-            print('cloning from', URL)
-            git.Repo.clone_from(URL, fullpath)
-            print('repo clone to ', fullpath)
-        pushLocalRepo(fullpath, reponame, update) # pushing it after cloning
-
-        # deleting the local repo
-        try:
-            shutil.rmtree(fullpath)
-            print(fullpath, "dir deleted")
-        except Exception as err:
-            print('something went wrong while deleting', fullpath)
+        if not os.path.exists(cloningpath):
+            os.mkdir(cloningpath)
     except Exception as err:
-        print("Error: There was an error in cloning or pushing [{}]".format(URL), err)
+        print("Something went wrong while creating a dir, "+err)
+
+    reponame = url.split("/")[-2] + "_" + url.split("/")[-1]
+    # url = url.replace("git@", "https://")
+
+    if reponame.endswith(".git"):
+        reponame = reponame[:-4]
+    if '@' in reponame:
+        reponame = reponame.split('_')[-1]
+
+    fullpath = cloningpath + "/" + reponame
+    update=False
+    if os.path.exists(fullpath):
+        repo = git.Repo(fullpath)
+        origin = repo.remotes.origin
+        origin.pull()
+        print("Repo already exists, so only updated at if any commited changes", fullpath)
+        update=True
+    else:
+        try:
+            print('cloning from', url)
+            git.Repo.clone_from(url, fullpath)
+            print('repo clone to ', fullpath)
+        except:
+            print('something went wrong while pulling from from ', url)
+            exit(1)
+
+    try:
+        pushLocalRepo(fullpath, reponame, update) # pushing it after cloning
+    except Exception as err:
+        print("Somthing, went wrong while try to push", reponame, "package", err)
+        exit(1)
 
 def pushLocalRepo(repo_path, name, update=False):
-    pushurl = config.GitGroupURL + name + '.git'
 
-    print('Pushing it to', pushurl )
+    if len(GitGroupUrl) == 0:
+        print ('the pushing URL is None provided, check your config file')
+        exit(1)
+    pushUrl = GitGroupUrl + "/" + name + '.git'
+
+    print('Pushing it to', pushUrl )
     try:
         repo = git.Repo(repo_path)
         origin=None
+        #if it already exists, only push some changes
         if update:
-            # repo.commit()
-            # print()
-            # origin = repo.remotes.origin.fetch()
-            # need to update remote orgin then push
-            pass
+            repo.commit()
+            origin = repo.remotes.origin
         else:
-            origin = git.remote.Remote.create(repo, name, pushurl)
+            remote = git.remote.Remote(repo, 'origin')
+            remote.set_url(pushUrl)
+            origin = repo.remotes.origin
         origin.push('master')
         print('success')
     except Exception as err:
-        print(err)
-        raise Exception('couldn\'t push')
+        raise Exception(err)
 
 
-def parseURL(packageName):
+def parseurl(packageName):
     url =''
     if "git@" in packageName or "https://" in packageName:
         url = packageName
@@ -94,26 +114,35 @@ def parseURL(packageName):
    
 
 def main():
-    parser = argparse.ArgumentParser(description='-p for one or more packages separated by commas')
-    parser.add_argument("-p",
-                        dest="packageNames",
-                        metavar='<package_1>,<package_2>',
-                        help="package name or url you want to clone, separate them by a comma(,) if you want to clone more than one",
-                        action="store")
+
+    parser = argparse.ArgumentParser(description='package(s)[url or just name] or packages(comma separated)  followed by config file (optional) path')
+    parser.add_argument('arguments', metavar='packages config-file-path(optional) git-url (optional)', nargs='+',
+                        help='package(s) or packages(comma separated)  followed by config file path (optional)')
+
+    args = parser.parse_args()
     
 
     args = parser.parse_args()
-    if not args.packageNames:
-        print('At least one package name to be cloned is required, the format is -p <package_1>,<package_2> ...')
-        exit(0)
-    URLs = args.packageNames.split(',')
+    packageNames = args.arguments[0]
+    try: 
+        global GitGroupUrl 
+        if len(args.arguments)> 1:
+            GitGroupUrl = loadConfiguration(args.arguments[1])
+        else:
+            GitGroupUrl = loadConfiguration(None)
+    except Exception as err:
+        print(err)
+        exit(1)
+
+
+    urls = packageNames.split(',')
     threads_limit =5
-    Q = queue.Queue()
+    cloningQueue = queue.Queue()
     threads_state = []
-    for URL in URLs:
-        Q.put(parseURL(URL))
-    while Q.empty() is False:
-        cloneRepo(Q.get())
+    for url in urls:
+        cloningQueue.put(parseurl(url))
+    while cloningQueue.empty() is False:
+        cloneRepo(cloningQueue.get())
 
 
 
@@ -134,3 +163,14 @@ if (__name__ == "__main__"):
             print('\nKeyboardInterrupt.')
             print('\nExiting...')
             exit(0)
+
+
+#TASKS
+
+# # 1. don't add autogenerated files to the repo, ie __pycache__ and the pyc files. you could use a .gitignore file to sort this out
+
+# # rather than storing the configuration in a python file, use an inifile - use the configparser to handle that. you could add a command line option to specify the file. you could also automatically look for it in the user's home directory, maybe call the file .autocloner.cfg
+# # add a license - up to you, I'd suggest GPL3
+# # 4. why are you using a nested try block? you should keep the stuff inside the try as small as possible. use sys.exit(1) to quite program if something terrible goes wrong
+# # 5. why are you deleting the cloned repo? I'd expect the user to want to start using it.
+# 6. rather than using command option -p use a positional argument (one without -p or --package) since the argument is required. you can also specify that at least one argument is required  (i think nargs='+'). comma separated options are a pain to script.
