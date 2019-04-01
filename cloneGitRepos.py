@@ -10,23 +10,27 @@ except ImportError:
 import threading
 import configparser
 
-def loadConfiguration(config_file_path=None):
+def loadConfiguration(config_dir_path=None):
     config = configparser.ConfigParser()
     defaultfile = "/.autocloner.cfg"
-    if config_file_path is None:
+    if config_dir_path is None:
         config_file_path = str(Path.home()) + defaultfile 
-        config.read(config_file_path)
-    else: 
-        config.read(config_file_path)
-    if len(config.sections()) ==0  or 'uoe-package-recipes' not in config:
-        print("Please create your config file editing and running createMyConfig.py or pass your configuration file path as second argument")
-        raise ValueError('couldn\'t find config file')
-    
-    key='url_test'
-    if key in config['uoe-package-recipes']:
-        return str(config['uoe-package-recipes'][key])
     else:
-        raise ValueError('Couldn\'t find', key, 'in the config file')
+        config_file_path = config_dir_path + defaultfile
+
+    config.read(config_file_path)
+    if len(config.sections()) ==0  or 'uoe-package-recipes' not in config:
+        print("Please create your config file by createMyConfig.py with desired arguments or configuration file path as argument after -c or --config")
+        raise ValueError('couldn\'t find config file')
+    loca_dir_path = None 
+    if 'local_path' in config['clone_dir'] and config['clone_dir']['local_path'] !='':
+        loca_dir_path = config['clone_dir']['local_path']
+        
+    
+    if 'url' in config['uoe-package-recipes']:
+        return (str(config['uoe-package-recipes']['url']), loca_dir_path)
+    else:
+        raise ValueError('Couldn\'t find push url in the config file')
 
 
 
@@ -38,7 +42,8 @@ def cloneRepo(url, cloningpath='temp'):
     url: GIT repository url.
     cloningPath: the directory that the repository will be cloned at. But the Default is temp
     """
-
+    if cloningpath is None:
+        cloningpath = 'temp'
     try:
         if not os.path.exists(cloningpath):
             os.mkdir(cloningpath)
@@ -65,9 +70,10 @@ def cloneRepo(url, cloningpath='temp'):
         try:
             print('cloning from', url)
             git.Repo.clone_from(url, fullpath)
-            print('repo clone to ', fullpath)
-        except:
+            print('the repo cloned to ', fullpath)
+        except Exception as err:
             print('something went wrong while pulling from from ', url)
+            print(err)
             exit(1)
 
     try:
@@ -117,20 +123,27 @@ def main():
 
     parser = argparse.ArgumentParser(description='It allows you to clone any git repo, if you type packages name it try to find it from https://src.fedoraproject.org/ \
         otherwise it uses a repo link given, and then upload it to git group or account you configured in you config file')
-    parser.add_argument('arguments', metavar='packages config-file-path(optional) save path(optional, saved at temp/ by default)', nargs='+',
-                        help='packange(s)_name/git_url (if packages separate them by comma)  followed by config-file-path (optional) followed by save-path(optional)')
+    parser.add_argument('packages', metavar='packages save path(optional, saved at temp/ by default)', nargs='+',
+                        help='packange(s)_name/git_url (if packages separate them by comma)')
+
+    parser.add_argument('-c', '--config', dest='config_file', metavar='config-file-path(optional)', nargs='?', help='config-file-path (optional) by default it takes check at ~/.autocloner.cfg($HOME/.autocloner.cfg)  ')
+
+    parser.add_argument('-s', '--save', dest = 'save_path',  metavar='save path(optional, saved at ./temp/ by default)', nargs='?', help='save-path(optional)')
 
     args = parser.parse_args()
     
 
     args = parser.parse_args()
-    packageNames = args.arguments[0]
+    packageNames = args.packages[0]
+
+    save_path = args.save_path
+
     try: 
         global GitGroupUrl 
-        if len(args.arguments)> 1:
-            GitGroupUrl = loadConfiguration(args.arguments[1])
-        else:
-            GitGroupUrl = loadConfiguration(None)
+        config = loadConfiguration(args.config_file)
+        GitGroupUrl = config[0]
+        if config[1] is not None:
+            save_path = config[1] 
     except Exception as err:
         print(err)
         exit(1)
@@ -142,19 +155,11 @@ def main():
     for url in urls:
         cloningQueue.put(parseurl(url))
     while cloningQueue.empty() is False:
-        cloneRepo(cloningQueue.get())
+        cloneRepo(cloningQueue.get(),save_path)
 
 
 
     
-
-    
-    
-
-    
-    # git remote add repo_name  https://git.ecdf.ed.ac.uk/testClone/test5.git
-    # git push repo_name  master
-
 
 if (__name__ == "__main__"):
     try:
