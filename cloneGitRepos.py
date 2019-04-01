@@ -142,7 +142,7 @@ def main():
         global GitGroupUrl 
         config = loadConfiguration(args.config_file)
         GitGroupUrl = config[0]
-        if config[1] is not None:
+        if save_path is None:
             save_path = config[1] 
     except Exception as err:
         print(err)
