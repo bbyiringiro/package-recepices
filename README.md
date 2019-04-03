@@ -1,6 +1,3 @@
-Need to setup ssh on your GitLab
-
-
 * To Clone package(s)
 
 run
@@ -19,6 +16,9 @@ $ python createMyConfig.py -u <git_url>(optional) -p <config_file_path>(optional
 - git_url : GitLab(Git) group or user url
 - config_file_path : path to save your /.autocloner.cfg at but by default it put it in $Home directore##
 - repo_path : path to be saving cloned repos. By default it saves them in ./temp/
+
+
+# Better if you set up ssh on your pc and use git url other than https, to avoid login every time you need to push or pull to your accountsg
 
 
 
