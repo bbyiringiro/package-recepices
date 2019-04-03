@@ -65,9 +65,10 @@ def cloneRepo(url, cloningpath='temp'):
         origin = repo.remotes.origin
         try:
             origin.pull()
+            print("Repo already exists, so only updated at if any commited changes", fullpath)
         except:
             print('couldn\' pull new updates')
-        print("Repo already exists, so only updated at if any commited changes", fullpath)
+        
         update=True
     else:
         try:
