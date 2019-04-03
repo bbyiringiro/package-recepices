@@ -123,8 +123,8 @@ def main():
 
     parser = argparse.ArgumentParser(description='It allows you to clone any git repo, if you type packages name it try to find it from https://src.fedoraproject.org/ \
         otherwise it uses a repo link given, and then upload it to git group or account you configured in you config file')
-    parser.add_argument('packages', metavar='packages save path(optional, saved at temp/ by default)', nargs='+',
-                        help='packange(s)_name/git_url (if packages separate them by comma)')
+    parser.add_argument('packages', metavar='package(s)', nargs='+',
+                        help='packange(s)_name/git_url (if it more than one separate them by comma)')
 
     parser.add_argument('-c', '--config', dest='config_file', metavar='config-file-path(optional)', nargs='?', help='config-file-path (optional) by default it takes check at ~/.autocloner.cfg($HOME/.autocloner.cfg)  ')
 
