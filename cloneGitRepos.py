@@ -104,8 +104,8 @@ def pushLocalRepo(repo_path, name, update=False):
             origin = repo.remotes.origin
         else:
             remote = git.remote.Remote(repo, 'origin')
+            # adds new remote for pushing
             remote.add_url(pushUrl)
-            # remote.create(repo, 'upstream',pushUrl)
 
             origin = repo.remotes.origin
         origin.push('master')
