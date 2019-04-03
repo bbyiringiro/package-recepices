@@ -8,7 +8,7 @@ import os
 parser = argparse.ArgumentParser(description='')
 parser.add_argument('-u','--url', dest='git_url', metavar='git url for user or a group account', nargs='?',
                     help='')
-parser.add_argument('-p', '--path', dest='config_path', metavar='path to save your .autocloner.cfg at', nargs='?', help='path to send your .autocloner.cfg at (by default it is save at $HOME/ .autocloner.cfg) ')
+parser.add_argument('-p', '--path', dest='config_path', metavar='path to save your .autocloner.cfg (optional)', nargs='?', help='path to send your .autocloner.cfg at (by default it is save at $HOME/ .autocloner.cfg) ')
 
 parser.add_argument('-rp', '--clonepath', dest='clone_path', metavar='local repo path to save cloned repos (optional)', nargs='?', help='optional ')
 
@@ -27,7 +27,6 @@ else:
     config_file_path = str(config_dir_path) + defaultfile
 
 if git_url is None:
-    # git_url = 'git@git.ecdf.ed.ac.uk:testClone'
     git_url = 'git@git.ecdf.ed.ac.uk:uoe-package-recipes'
 
 
@@ -45,3 +44,4 @@ if config_dir_path is not None and  not os.path.exists(config_dir_path):
 
 with open(config_file_path, 'w') as configfile:
     config.write(configfile)
+print('.autocloner.cfg file is saved at :', config_file_path)
