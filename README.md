@@ -1,4 +1,4 @@
-* To Clone package(s)
+# To Clone package(s)
 
 run
 
@@ -7,7 +7,7 @@ $ python cloneGitRepos.py  <package_name_1>,<package_name_2>  -c <confige_filePa
 <package_name> can either be a name of package as it appear on https://src.fedoraproject.org/ or any git link
 
 
-* To create Config file
+# To create Config file
 
 run
 
@@ -18,7 +18,7 @@ $ python createMyConfig.py -u <git_url>(optional) -p <config_file_path>(optional
 - repo_path : path to be saving cloned repos. By default it saves them in ./temp/
 
 
-# Better if you set up ssh on your pc and use git url other than https, to avoid login every time you need to push or pull to your accountsg
+- Better if you set up ssh on your pc and use git url other than https, to avoid login every time you need to push or pull to your accountsg
 
 
 
