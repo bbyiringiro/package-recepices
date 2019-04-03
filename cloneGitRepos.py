@@ -65,7 +65,6 @@ def cloneRepo(url, cloningpath='temp'):
         try:
             repo = git.Repo(fullpath)
             origin = repo.remotes.origin
-            print(origin)
             origin.pull()
             print("Repo already exists, so only updated at if any commited changes", fullpath)
         except:
