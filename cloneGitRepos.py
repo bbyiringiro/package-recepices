@@ -139,9 +139,9 @@ def main():
     parser.add_argument('packages', metavar='package(s)', nargs='+',
                         help='packange(s)_name/git_url (if it more than one separate them by comma)')
 
-    parser.add_argument('-c', '--config', dest='config_file', metavar='config-file-path(optional)', nargs='?', help='config-file-path (optional) by default it takes check at ~/.autocloner.cfg($HOME/.autocloner.cfg)  ')
+    parser.add_argument('-c', '--config', dest='config_file', metavar='config-file-path(optional)', nargs='?', help='(optional)  config-file-path of .autocloner.cfg by default it takes check at ~/.autocloner.cfg($HOME/.autocloner.cfg)  ')
 
-    parser.add_argument('-s', '--save', dest = 'save_path',  metavar='save path(optional, saved at ./temp/ by default)', nargs='?', help='save-path(optional)')
+    parser.add_argument('-s', '--save', dest = 'save_path',  metavar='save path(optional, saved at ./temp/ by default)', nargs='?', help='(optional) path to save cloned repo. By default it is ./temp/')
 
     args = parser.parse_args()
     
