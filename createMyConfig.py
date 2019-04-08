@@ -27,7 +27,9 @@ else:
     config_file_path = str(config_dir_path) + defaultfile
 
 if git_url is None:
-    git_url = 'git@git.ecdf.ed.ac.uk:uoe-package-recipes'
+    #testClone
+    #uoe-package-recipes
+    git_url = 'git@git.ecdf.ed.ac.uk:testClone'
 
 
 config = configparser.ConfigParser()
@@ -44,4 +46,4 @@ if config_dir_path is not None and  not os.path.exists(config_dir_path):
 
 with open(config_file_path, 'w') as configfile:
     config.write(configfile)
-print('.autocloner.cfg file is saved at :', config_file_path)
+print('.autocloner.cfg file is now saved at :', config_file_path)

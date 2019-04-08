@@ -10,6 +10,8 @@ except ImportError:
 import threading
 import configparser
 
+threadLock = threading.Lock()
+
 def loadConfiguration(config_dir_path=None):
     config = configparser.ConfigParser()
     defaultfile = "/.autocloner.cfg"
@@ -36,12 +38,15 @@ def loadConfiguration(config_dir_path=None):
 
 
 def cloneRepo(url, cloningpath='temp'):
+   
     """
     Clones a single GIT repository.
     Input:-
     url: GIT repository url.
     cloningPath: the directory that the repository will be cloned at. But the Default is temp
     """
+
+    threadLock.acquire()
     if cloningpath is None:
         cloningpath = 'temp'
     try:
@@ -86,8 +91,10 @@ def cloneRepo(url, cloningpath='temp'):
     except Exception as err:
         print("Somthing, went wrong while try to push", reponame, "package", err)
         exit(1)
+    threadLock.release()
 
 def pushLocalRepo(repo_path, name, update=False):
+    
 
     if len(GitGroupUrl) == 0:
         print ('the pushing URL is None provided, check your config file')
@@ -101,13 +108,12 @@ def pushLocalRepo(repo_path, name, update=False):
         #if it already exists, only push some changes
         if update:
             repo.commit()
-            origin = repo.remotes.origin
+            origin = repo.remotes.upstream;
         else:
-            remote = git.remote.Remote(repo, 'origin')
-            # adds new remote for pushing
-            remote.add_url(pushUrl)
+            # adds new remote upstream for specially for pushing
+            new_remote = git.Remote.add(repo,'upstream', pushUrl);
 
-            origin = repo.remotes.origin
+            origin = repo.remotes.upstream;
         origin.push('master')
         print('success')
     except Exception as err:
@@ -145,6 +151,8 @@ def main():
 
     save_path = args.save_path
 
+    
+
     try: 
         global GitGroupUrl 
         config = loadConfiguration(args.config_file)
@@ -162,7 +170,12 @@ def main():
     for url in urls:
         cloningQueue.put(parseurl(url))
     while cloningQueue.empty() is False:
-        cloneRepo(cloningQueue.get(),save_path)
+        # cloneRepo(cloningQueue.get(),save_path)
+
+        t = threading.Thread(target=cloneRepo, args = (cloningQueue.get(),save_path))
+        t.daemon = True
+        # t.start()
+        t.run()
 
 
 
