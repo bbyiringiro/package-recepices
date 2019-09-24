@@ -28,10 +28,10 @@ Create a ~/.package-recipes.cfg file with the following content
 ```
 [config]
 local_path = /some/directory/where/the/local/repos/are
-project_url = git@git.ecdf.ed.ac.uk:uoe-package-recipes
+project_url = ${GIT_DIR_URL}
 upstream_branch = f19
-unit = uoe # used for branch names and releases
-packager = Una Persson <una.persson@ed.ac.uk>
+unit = ${BRANCH} # used for branch names and releases
+packager = ${USER}
 distribution = el7
 ```
 
