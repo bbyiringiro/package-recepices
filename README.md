@@ -13,7 +13,7 @@ and activate it
 ```
 Download the package recipes sources by cloneing the repository
 ```
-git clone git@git.ecdf.ed.ac.uk:uoe-package-recipes/package-recipes.git
+git clone git@github.com:billyjason/package-recepices.git
 ```
 
 The package uses python3 and requires the gitpython package. Run
@@ -37,7 +37,7 @@ distribution = el7
 
 Workflow
 ========
-* identify a package you want to clone from Fedora and run
+* identify a package you want to clone from Fedora (https://src.fedoraproject.org/)  and run
 ```
 pr-clone package-name
 ```
