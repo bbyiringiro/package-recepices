@@ -1,0 +1,62 @@
+MOCK_ARCH ?= $(shell uname -m)
+MOCK_CHROOT ?= sl-6-$(MOCK_ARCH)
+
+vers ?= $(shell rpm -q --specfile $(firstword $(SPECFILE)) --queryformat '%{VERSION}-%{RELEASE}\n' | uniq)
+name ?= $(subst .spec,,$(SPECFILE))
+pwd = $(shell pwd)
+# awk field pattern - either fields contain no spaces or they are enclosed by double quotes
+sources = $(shell awk -vFPAT='\\S+|"[^"]+"' '{printf("%s ", $$2)}' sources )
+
+ifeq ($(SPECFILE),)
+  SPECFILE = $(MOCK_SPECFILE) $(NOMOCK_SPECFILE)
+else
+  MOCK_SPECFILE ?= $(SPECFILE)
+  NOMOCK_SPECFILE ?= $(SPECFILE)
+endif
+
+SRPMS        = $(subst .spec,-$(vers).src.rpm,$(SPECFILE))
+MOCK_SRPMS   = $(subst .spec,-$(vers).src.rpm,$(MOCK_SPECFILE))
+NOMOCK_SRPMS = $(subst .spec,-$(vers).src.rpm,$(NOMOCK_SPECFILE))
+
+# build targets
+MOCK_RPMS = $(subst .src.rpm,.mock.rpm,$(MOCK_SRPMS))
+NOMOCK_RPMS = $(subst .src.rpm,.nomock.rpm,$(NOMOCK_SRPMS))
+
+CSETTINGS = $(SCRIPTS_DIR)/compilers
+
+.PHONY:		all release build build-nomock
+
+all: $(SRPMS)
+
+%.spec:		%.spec.in $(CSETTINGS)/system.settings 
+		$(SCRIPTS_DIR)/genCompilerSpec.sh $(CSETTINGS)/system.settings $< $@
+
+%-intel-12.0.spec:	%.spec.in $(CSETTINGS)/intel-12.0.settings 
+		$(SCRIPTS_DIR)/genCompilerSpec.sh $(CSETTINGS)/intel-12.0.settings $< $@
+
+%-intel-2016.spec:	%.spec.in $(CSETTINGS)/intel-2016.settings 
+		$(SCRIPTS_DIR)/genCompilerSpec.sh $(CSETTINGS)/intel-2016.settings $< $@
+
+%-$(vers).src.rpm:	%.spec $(sources)
+		rpmbuild --define "_sourcedir $(pwd)" --define "_srcrpmdir $(pwd)" -bs $<
+
+%-$(vers).mock.rpm:	 %-$(vers).src.rpm
+		/usr/bin/mock -r $(MOCK_CHROOT) $(pwd)/$<
+
+%-$(vers).nomock.rpm:	 %-$(vers).src.rpm
+		rpmbuild --rebuild $< 2>&1 | tee $*.log
+
+
+$(sources):	sources
+		pr-download sources && \
+		touch $(sources)
+
+release:	$(SPECFILE)
+		pr-release $(firstword $(SPECFILE))
+
+build:		$(MOCK_RPMS)
+
+build-nomock:	$(NOMOCK_RPMS)
+
+up:		$(SPECFILE)
+		pr-rpmfiles -m /etc/mock/$(MOCK_CHROOT).cfg $(firstword $(SPECFILE))

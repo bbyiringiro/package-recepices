@@ -2,3 +2,4 @@
 
 gitpython
 argparse
+python-rpm-spec

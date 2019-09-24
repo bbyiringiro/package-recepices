@@ -1,27 +1,102 @@
-# To Clone package(s)
+Utilities to handle package-recipes rpm projects.
 
-run
+Installation
+============
 
-$ python cloneGitRepos.py  <package_name_1>,<package_name_2>  -c <confige_filePath> (optional) -s <cloned_dir_path>(optional)
+Create Virtual Environment
+```
+virtualenv-3 --system-site-packages /some/dir
+```
+and activate it
+```
+. /some/dir/bin/activate
+```
+Download the package recipes sources by cloneing the repository
+```
+git clone git@git.ecdf.ed.ac.uk:uoe-package-recipes/package-recipes.git
+```
 
-<package_name> can either be a name of package as it appear on https://src.fedoraproject.org/ or any git link
+The package uses python3 and requires the gitpython package. Run
+```
+python setup.py install
+```
+to install the package.
 
+Configuration
+=============
+Create a ~/.package-recipes.cfg file with the following content
+```
+[config]
+local_path = /some/directory/where/the/local/repos/are
+project_url = git@git.ecdf.ed.ac.uk:uoe-package-recipes
+upstream_branch = f19
+unit = uoe # used for branch names and releases
+packager = Una Persson <una.persson@ed.ac.uk>
+distribution = el7
+```
 
-# To create Config file
+Workflow
+========
+* identify a package you want to clone from Fedora and run
+```
+pr-clone package-name
+```
+   you might want to specify a particular Fedora branch you want to use as basis for your changes.
+* change the sources file to include a URL where to download the source files and make any changes to the spec file
+* run
+```
+make build
+```
+   to generate the source rpm and run mock to build the packge
+* if everything works commit your changes
+* run
+```
+make up
+```
+   to generate a file containing the list of rpms to be uploaded. In the case where some files did not get generated a warning is issues and you should check the rpm list.
+* upload rpms
+```
+mdp-package-submit -b ... -d el7 @up
+```
+* create a release tag
+```
+make release
+```
+The tag gets printed. Make sure it is sensible.
+* push changes to package recipe project. You need to push both the branch and tag, eg
+```
+git push origin geos_el7; git push origin el7_2.18.20_2_3.geos
+```
+* in project settings make project internal
 
-run
+Utilities
+=========
 
-$ python createMyConfig.py -u <git_url>(optional) -p <config_file_path>(optional) -rp<repo_path>(optional)
+pr-create
+---------
+Utiltiy to create a new rpm package.
 
-- git_url : GitLab(Git) group or user url
-- config_file_path : path to save your /.autocloner.cfg at but by default it put it in $Home directore##
-- repo_path : path to be saving cloned repos. By default it saves them in ./temp/
+pr-clone
+---------
+Utility used to clone package sources from the Fedora project. Run with the -h flag to get some help. Run pr-clone pkg, eg
+```
+pr-clone python-pillow
+```
+The utility will
+* create an upstream remote
+* modify the spec file to include extra UoE fields and update the changelog
+* add a Makefile
 
+It creates a unit specific branch and commits the changes. Finally, the changes are pushed to the gitlab project.
 
-- Better if you set up ssh on your pc and use git url other than https, to avoid login every time you need to push or pull to your accountsg
+pr-download
+-----------
+download a source file and check md5 sum
 
+pr-release
+----------
+create a release tag
 
-
-
-
-
+pr-rpmfiles
+-----------
+query the spec file to figure out what files have been created and list them in a file. 
